@@ -223,10 +223,6 @@ const App: React.FC = () => {
     );
   };
   
-  if (authState === 'pending') {
-      return <LoginModal onLoginSuccess={setAuthState} onShowError={showNotification} />;
-  }
-
   const ViewComponent = useMemo(() => {
     if (isLoading) return <div className="flex items-center justify-center h-full"><SyncIcon className="w-12 h-12 text-accent animate-spin" /></div>;
     const props = { onEditTask: handleOpenTaskModal, onUpdateTask: handleUpdateTask, showTagsOnTasks };
@@ -240,158 +236,157 @@ const App: React.FC = () => {
     }
   }, [view, filteredTasks, kanbanFilteredTasks, moveTask, notes, addNote, updateNote, deleteNote, weeklyViewDays, activeTags, showTagsOnTasks, weeklyViewLayout, handleUpdateTask, handleOpenTaskModal, handleAddTaskForDate, isLoading]);
 
-  if (isMobile) {
-    return (
-      <>
-        {/* Mobile View remains largely unchanged but now gets the correct API key */}
-        <MobileApp
-          tasks={filteredTasks}
-          onEditTask={handleOpenTaskModal}
-          onUpdateTask={handleUpdateTask}
-          showTagsOnTasks={showTagsOnTasks}
-          chatAssistantProps={{
-            tasks: filteredTasks,
-            onPlanProposed: handlePlanProposed,
-            systemNote,
-            rules,
-            activeTags,
-            activeCollection,
-            chatMode,
-            onSetChatMode: setChatMode,
-            apiKey: currentApiKey,
-            handleApiError,
-          }}
-        />
-        {/* Modals are shared */}
-        <TaskModal isOpen={isTaskModalOpen} onClose={handleCloseTaskModal} onSave={handleSaveTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} taskToEdit={taskToEdit} initialDate={initialDateForNewTask}/>
-        {isConfirmationModalOpen && proposedPlan && <ConfirmationModal tasks={tasks} plan={proposedPlan} onConfirm={handleConfirmPlan} onCancel={() => setIsConfirmationModalOpen(false)}/>}
-        <ApiKeyModal isOpen={isApiKeyModalOpen} onSave={handleSaveApiKey} onClose={() => setIsApiKeyModalOpen(false)} isCancellable={!!localApiKey} errorMessage={apiKeyError} />
-        {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
-      </>
-    );
-  }
-
   return (
-    <div className="bg-bg-main text-primary-text font-sans h-screen flex flex-col antialiased">
-      <header className="p-2 bg-surface flex-shrink-0 border-b border-divider flex flex-col gap-2">
-        {/* Header content unchanged */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-                <button ref={collectionButtonRef} onClick={() => setIsCollectionDropdownOpen(p => !p)} className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg text-primary-text hover:bg-gray-200">
-                    {activeCollection === 'Work' && <BriefcaseIcon className="w-5 h-5" />}
-                    {activeCollection === 'Life' && <HomeIcon className="w-5 h-5" />}
-                    <span className="font-semibold">{activeCollection}</span>
-                    <ChevronDownIcon className="w-4 h-4 text-secondary-text" />
-                </button>
-                {isCollectionDropdownOpen && (
-                    <div ref={collectionDropdownRef} className="absolute left-0 mt-2 w-48 origin-top-left bg-surface rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                         <div className="py-1">
-                            {(['All', 'Work', 'Life'] as const).map(collection => (
-                                <button key={collection} onClick={() => { setActiveCollection(collection); setIsCollectionDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
-                                    {collection === 'Work' && <BriefcaseIcon className="w-5 h-5" />}
-                                    {collection === 'Life' && <HomeIcon className="w-5 h-5" />}
-                                    <span>{collection}</span>
-                                </button>
-                            ))}
+    <>
+      {authState === 'pending' ? (
+        <LoginModal onLoginSuccess={setAuthState} onShowError={showNotification} />
+      ) : isMobile ? (
+        <>
+          <MobileApp
+            tasks={filteredTasks}
+            onEditTask={handleOpenTaskModal}
+            onUpdateTask={handleUpdateTask}
+            showTagsOnTasks={showTagsOnTasks}
+            chatAssistantProps={{
+              tasks: filteredTasks,
+              onPlanProposed: handlePlanProposed,
+              systemNote,
+              rules,
+              activeTags,
+              activeCollection,
+              chatMode,
+              onSetChatMode: setChatMode,
+              apiKey: currentApiKey,
+              handleApiError,
+            }}
+          />
+          <TaskModal isOpen={isTaskModalOpen} onClose={handleCloseTaskModal} onSave={handleSaveTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} taskToEdit={taskToEdit} initialDate={initialDateForNewTask}/>
+          {isConfirmationModalOpen && proposedPlan && <ConfirmationModal tasks={tasks} plan={proposedPlan} onConfirm={handleConfirmPlan} onCancel={() => setIsConfirmationModalOpen(false)}/>}
+          <ApiKeyModal isOpen={isApiKeyModalOpen} onSave={handleSaveApiKey} onClose={() => setIsApiKeyModalOpen(false)} isCancellable={!!localApiKey} errorMessage={apiKeyError} />
+        </>
+      ) : (
+        <div className="bg-bg-main text-primary-text font-sans h-screen flex flex-col antialiased">
+          <header className="p-2 bg-surface flex-shrink-0 border-b border-divider flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                    <button ref={collectionButtonRef} onClick={() => setIsCollectionDropdownOpen(p => !p)} className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg text-primary-text hover:bg-gray-200">
+                        {activeCollection === 'Work' && <BriefcaseIcon className="w-5 h-5" />}
+                        {activeCollection === 'Life' && <HomeIcon className="w-5 h-5" />}
+                        <span className="font-semibold">{activeCollection}</span>
+                        <ChevronDownIcon className="w-4 h-4 text-secondary-text" />
+                    </button>
+                    {isCollectionDropdownOpen && (
+                        <div ref={collectionDropdownRef} className="absolute left-0 mt-2 w-48 origin-top-left bg-surface rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                            <div className="py-1">
+                                {(['All', 'Work', 'Life'] as const).map(collection => (
+                                    <button key={collection} onClick={() => { setActiveCollection(collection); setIsCollectionDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
+                                        {collection === 'Work' && <BriefcaseIcon className="w-5 h-5" />}
+                                        {collection === 'Life' && <HomeIcon className="w-5 h-5" />}
+                                        <span>{collection}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-            <nav className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
-              {(['list', 'weekly', 'calendar', 'kanban', 'notes'] as View[]).map(v => {
-                const Icon = { kanban: KanbanIcon, list: ListIcon, weekly: WeekIcon, calendar: CalendarIcon, notes: NotesIcon }[v];
-                return (
-                  <button
-                    key={v}
-                    onClick={() => setView(v)}
-                    className={`p-2 rounded-md transition-colors ${view === v ? 'bg-accent-dark text-white' : 'text-secondary-text hover:bg-gray-200 hover:text-primary-text'}`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                )
-              })}
-            </nav>
-            {view === 'weekly' && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button onClick={() => setWeeklyViewDays(prev => Math.max(1, prev - 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">-</button>
-                    <span className="text-sm font-medium text-primary-text w-20 text-center">{weeklyViewDays + 2} Days</span>
-                    <button onClick={() => setWeeklyViewDays(prev => Math.min(8, prev + 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">+</button>
+                    )}
                 </div>
-                <button
-                    onClick={() => setWeeklyViewLayout(p => p === 'simple' ? 'grid' : 'simple')}
-                    className={`p-2 rounded-lg transition-colors ${weeklyViewLayout === 'grid' ? 'bg-accent-dark text-white' : 'text-secondary-text hover:bg-gray-200 hover:text-primary-text'}`}
-                >
-                  <GridIcon className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-            {view === 'kanban' && (
-              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                  <button onClick={() => setKanbanFutureDays(prev => Math.max(0, prev - 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">-</button>
-                  <span className="text-sm font-medium text-primary-text w-28 text-center">Future: +{kanbanFutureDays} Days</span>
-                  <button onClick={() => setKanbanFutureDays(prev => Math.min(90, prev + 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">+</button>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-              <button onClick={() => handleOpenTaskModal()} className="flex items-center gap-2 px-3 py-1.5 bg-accent-dark hover:bg-indigo-800 text-white font-semibold rounded-lg text-sm"><PlusIcon className="w-5 h-5" /><span>New Task</span></button>
-              <button onClick={() => setIsFilterVisible(prev => !prev)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><TagIcon className="w-6 h-6" /></button>
-              <div className="relative">
-                 <button ref={settingsButtonRef} onClick={() => setIsSettingsDropdownOpen(prev => !prev)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><SettingsIcon className="w-6 h-6" /></button>
-                 {isSettingsDropdownOpen && (
-                    <div ref={settingsDropdownRef} className="absolute right-0 mt-2 w-64 origin-top-right bg-surface rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                        <div className="py-1">
-                            <button onClick={() => { setShowTagsOnTasks(prev => !prev); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
-                                {showTagsOnTasks ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                                <span>{showTagsOnTasks ? 'Hide Tags' : 'Show Tags'}</span>
-                            </button>
-                            <button onClick={() => { setApiKeyError(null); setIsApiKeyModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
-                                <KeyIcon className="w-5 h-5" />
-                                <span>Update Gemini API Key</span>
-                            </button>
-                            <button onClick={() => { setIsSettingsModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
-                                <PencilIcon className="w-5 h-5" />
-                                <span>Customize AI Prompt</span>
-                            </button>
-                        </div>
+                <nav className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
+                  {(['list', 'weekly', 'calendar', 'kanban', 'notes'] as View[]).map(v => {
+                    const Icon = { kanban: KanbanIcon, list: ListIcon, weekly: WeekIcon, calendar: CalendarIcon, notes: NotesIcon }[v];
+                    return (
+                      <button
+                        key={v}
+                        onClick={() => setView(v)}
+                        className={`p-2 rounded-md transition-colors ${view === v ? 'bg-accent-dark text-white' : 'text-secondary-text hover:bg-gray-200 hover:text-primary-text'}`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </button>
+                    )
+                  })}
+                </nav>
+                {view === 'weekly' && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                        <button onClick={() => setWeeklyViewDays(prev => Math.max(1, prev - 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">-</button>
+                        <span className="text-sm font-medium text-primary-text w-20 text-center">{weeklyViewDays + 2} Days</span>
+                        <button onClick={() => setWeeklyViewDays(prev => Math.min(8, prev + 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">+</button>
                     </div>
-                 )}
+                    <button
+                        onClick={() => setWeeklyViewLayout(p => p === 'simple' ? 'grid' : 'simple')}
+                        className={`p-2 rounded-lg transition-colors ${weeklyViewLayout === 'grid' ? 'bg-accent-dark text-white' : 'text-secondary-text hover:bg-gray-200 hover:text-primary-text'}`}
+                    >
+                      <GridIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+                {view === 'kanban' && (
+                  <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                      <button onClick={() => setKanbanFutureDays(prev => Math.max(0, prev - 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">-</button>
+                      <span className="text-sm font-medium text-primary-text w-28 text-center">Future: +{kanbanFutureDays} Days</span>
+                      <button onClick={() => setKanbanFutureDays(prev => Math.min(90, prev + 1))} className="px-2 py-1 rounded-md text-secondary-text hover:bg-gray-200 hover:text-primary-text">+</button>
+                  </div>
+                )}
               </div>
-              <button onClick={() => setIsChatVisible(!isChatVisible)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><MessageIcon className="w-6 h-6" /></button>
-          </div>
-        </div>
-         {isFilterVisible && allTags.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap border-t border-divider pt-2">
-                <span className="text-sm font-medium text-secondary-text mr-2">Filter by tag:</span>
-                {allTags.map(tag => (
-                    <button key={tag} onClick={() => toggleTagFilter(tag)} className={`px-2.5 py-1 text-xs font-medium rounded-full ${activeTags.includes(tag) ? 'bg-accent-dark text-white' : 'bg-gray-200 text-secondary-text hover:bg-gray-300'}`}>{tag}</button>
-                ))}
-                {activeTags.length > 0 && (<button onClick={() => setActiveTags([])} className="ml-2 text-xs text-accent hover:text-accent-dark font-semibold">Clear Filter</button>)}
+              <div className="flex items-center gap-3">
+                  <button onClick={() => handleOpenTaskModal()} className="flex items-center gap-2 px-3 py-1.5 bg-accent-dark hover:bg-indigo-800 text-white font-semibold rounded-lg text-sm"><PlusIcon className="w-5 h-5" /><span>New Task</span></button>
+                  <button onClick={() => setIsFilterVisible(prev => !prev)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><TagIcon className="w-6 h-6" /></button>
+                  <div className="relative">
+                    <button ref={settingsButtonRef} onClick={() => setIsSettingsDropdownOpen(prev => !prev)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><SettingsIcon className="w-6 h-6" /></button>
+                    {isSettingsDropdownOpen && (
+                        <div ref={settingsDropdownRef} className="absolute right-0 mt-2 w-64 origin-top-right bg-surface rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                            <div className="py-1">
+                                <button onClick={() => { setShowTagsOnTasks(prev => !prev); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
+                                    {showTagsOnTasks ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                                    <span>{showTagsOnTasks ? 'Hide Tags' : 'Show Tags'}</span>
+                                </button>
+                                <button onClick={() => { setApiKeyError(null); setIsApiKeyModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
+                                    <KeyIcon className="w-5 h-5" />
+                                    <span>Update Gemini API Key</span>
+                                </button>
+                                <button onClick={() => { setIsSettingsModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
+                                    <PencilIcon className="w-5 h-5" />
+                                    <span>Customize AI Prompt</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                  </div>
+                  <button onClick={() => setIsChatVisible(!isChatVisible)} className="p-2 rounded-lg text-secondary-text hover:bg-gray-200 hover:text-primary-text"><MessageIcon className="w-6 h-6" /></button>
+              </div>
             </div>
-        )}
-      </header>
+            {isFilterVisible && allTags.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap border-t border-divider pt-2">
+                    <span className="text-sm font-medium text-secondary-text mr-2">Filter by tag:</span>
+                    {allTags.map(tag => (
+                        <button key={tag} onClick={() => toggleTagFilter(tag)} className={`px-2.5 py-1 text-xs font-medium rounded-full ${activeTags.includes(tag) ? 'bg-accent-dark text-white' : 'bg-gray-200 text-secondary-text hover:bg-gray-300'}`}>{tag}</button>
+                    ))}
+                    {activeTags.length > 0 && (<button onClick={() => setActiveTags([])} className="ml-2 text-xs text-accent hover:text-accent-dark font-semibold">Clear Filter</button>)}
+                </div>
+            )}
+          </header>
 
-      <main className="flex-1 flex overflow-hidden">
-        <div className="flex-1 p-4 overflow-auto">{ViewComponent}</div>
-        {isChatVisible && currentApiKey && (<aside className="w-full md:w-1/3 max-w-md border-l border-divider flex-shrink-0"><ChatAssistant tasks={filteredTasks} onPlanProposed={handlePlanProposed} systemNote={systemNote} rules={rules} activeTags={activeTags} activeCollection={activeCollection} chatMode={chatMode} onSetChatMode={setChatMode} apiKey={currentApiKey} handleApiError={handleApiError} /></aside>)}
-        {isChatVisible && !currentApiKey && (<aside className="w-full md:w-1/3 max-w-md border-l border-divider flex-shrink-0 flex items-center justify-center p-4"><div className="text-center text-secondary-text">Please set up an API key to use the AI Assistant.</div></aside>)}
-      </main>
+          <main className="flex-1 flex overflow-hidden">
+            <div className="flex-1 p-4 overflow-auto">{ViewComponent}</div>
+            {isChatVisible && currentApiKey && (<aside className="w-full md:w-1/3 max-w-md border-l border-divider flex-shrink-0"><ChatAssistant tasks={filteredTasks} onPlanProposed={handlePlanProposed} systemNote={systemNote} rules={rules} activeTags={activeTags} activeCollection={activeCollection} chatMode={chatMode} onSetChatMode={setChatMode} apiKey={currentApiKey} handleApiError={handleApiError} /></aside>)}
+            {isChatVisible && !currentApiKey && (<aside className="w-full md:w-1/3 max-w-md border-l border-divider flex-shrink-0 flex items-center justify-center p-4"><div className="text-center text-secondary-text">Please set up an API key to use the AI Assistant.</div></aside>)}
+          </main>
+          
+          <TaskModal isOpen={isTaskModalOpen} onClose={handleCloseTaskModal} onSave={handleSaveTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} taskToEdit={taskToEdit} initialDate={initialDateForNewTask}/>
+          {isConfirmationModalOpen && proposedPlan && (<ConfirmationModal tasks={tasks} plan={proposedPlan} onConfirm={handleConfirmPlan} onCancel={() => setIsConfirmationModalOpen(false)}/>)}
+          <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} initialSystemNote={systemNote} initialRules={rules}/>
+          <ApiKeyModal isOpen={isApiKeyModalOpen} onSave={handleSaveApiKey} onClose={() => { if(localApiKey || defaultApiKey) setIsApiKeyModalOpen(false) }} isCancellable={!!(localApiKey || defaultApiKey)} errorMessage={apiKeyError} />
 
-      {dataError && <Notification message={dataError} type="error" onClose={() => {}} />}
-      {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+          <style>{`
+            /* Custom scrollbar */
+            ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; } ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
+          `}</style>
+        </div>
+      )}
 
-      <TaskModal isOpen={isTaskModalOpen} onClose={handleCloseTaskModal} onSave={handleSaveTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} taskToEdit={taskToEdit} initialDate={initialDateForNewTask}/>
-      {isConfirmationModalOpen && proposedPlan && (<ConfirmationModal tasks={tasks} plan={proposedPlan} onConfirm={handleConfirmPlan} onCancel={() => setIsConfirmationModalOpen(false)}/>)}
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} initialSystemNote={systemNote} initialRules={rules}/>
-      <ApiKeyModal isOpen={isApiKeyModalOpen} onSave={handleSaveApiKey} onClose={() => { if(localApiKey || defaultApiKey) setIsApiKeyModalOpen(false) }} isCancellable={!!(localApiKey || defaultApiKey)} errorMessage={apiKeyError} />
-
-      <style>{`
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; } ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
-      `}</style>
-    </div>
+      {/* Common notifications, rendered outside the main layouts but only when logged in */}
+      {authState !== 'pending' && notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+      {authState !== 'pending' && dataError && <Notification message={dataError} type="error" onClose={() => {}} />}
+    </>
   );
 };
 
