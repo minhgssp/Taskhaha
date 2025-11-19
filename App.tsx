@@ -31,10 +31,10 @@ const columns: Column[] = [
 ];
 
 // Constants for settings
-const SYSTEM_NOTE_KEY = 'zenith_system_note';
-const RULES_KEY = 'zenith_rules';
-const TAG_VISIBILITY_KEY = 'zenith_show_tags_on_tasks';
-const API_KEY_STORAGE_KEY = 'zenith_gemini_api_key';
+const SYSTEM_NOTE_KEY = 'taskhaha_system_note';
+const RULES_KEY = 'taskhaha_rules';
+const TAG_VISIBILITY_KEY = 'taskhaha_show_tags_on_tasks';
+const API_KEY_STORAGE_KEY = 'taskhaha_gemini_api_key';
 const MOBILE_BREAKPOINT = 768;
 
 const App: React.FC = () => {

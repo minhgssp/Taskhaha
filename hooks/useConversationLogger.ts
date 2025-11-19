@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Message } from '../types.ts';
 
-const LOG_STORAGE_KEY = 'zenith_chat_log';
+const LOG_STORAGE_KEY = 'taskhaha_chat_log';
 
 interface Log {
   date: string; // YYYY-MM-DD

@@ -7,7 +7,7 @@ interface AppData {
 }
 
 const DEBOUNCE_DELAY = 1500; // 1.5 seconds
-const LOCAL_STORAGE_KEY = 'zenith_app_data'; // Key for local storage fallback
+const LOCAL_STORAGE_KEY = 'taskhaha_app_data'; // Key for local storage fallback
 
 // Check if running in AI Studio environment
 const isAiStudio = typeof window !== 'undefined' && !!(window as any).aistudio;

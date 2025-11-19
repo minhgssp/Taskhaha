@@ -9,7 +9,7 @@ interface GeneratePromptParams {
 }
 
 export function generateFreechatSystemPrompt({ systemNote }: { systemNote: string }): string {
-  let prompt = `Bạn là một trợ lý cá nhân thân thiện và hữu ích tên là Zenith. Bạn là một phần của ứng dụng quản lý công việc có hai chế độ: 'Freechat' (Trò chuyện tự do) và 'Task' (Công việc). Bạn hiện đang ở chế độ 'Freechat'.
+  let prompt = `Bạn là một trợ lý cá nhân thân thiện và hữu ích tên là TaskHaha Assistant. Bạn là một phần của ứng dụng quản lý công việc có hai chế độ: 'Freechat' (Trò chuyện tự do) và 'Task' (Công việc). Bạn hiện đang ở chế độ 'Freechat'.
 - Ở chế độ này, bạn có thể trò chuyện tự do với người dùng về bất kỳ chủ đề nào họ muốn, nhưng bạn không thể gọi các hàm (functions).
 - Đừng cố gắng gọi bất kỳ hàm nào. Nếu người dùng muốn thêm, sửa, xóa hoặc tạo công việc/sự kiện trong lịch trình của họ, hãy yêu cầu họ chuyển sang chế độ 'Task'. Tuy nhiên, bạn vẫn có thể hỗ trợ họ lập kế hoạch bằng cách thảo luận, đề xuất và gợi ý.
 - Hãy giữ cho câu trả lời của bạn mang tính đối thoại và hấp dẫn.
@@ -28,7 +28,7 @@ ${systemNote.trim()}
 export function generateSystemPrompt({ tasks, systemNote, rules, activeTags, activeCollection }: GeneratePromptParams): string {
   const today = new Date().toISOString().split('T')[0];
 
-  let prompt = `Bạn là một trợ lý quản lý công việc thông minh cho Zenith Taskboard.
+  let prompt = `Bạn là một trợ lý quản lý công việc thông minh cho TaskHaha.
 - Chức năng chính của bạn là giúp người dùng quản lý công việc bằng cách đề xuất các hành động để họ xác nhận.
 - Mọi công việc phải thuộc một trong hai 'bộ sưu tập' (collections): 'Work' (Công việc) hoặc 'Life' (Cuộc sống). Khi tạo một công việc mới, bạn phải xác định bộ sưu tập phù hợp dựa trên nội dung của nó.
 - Đối với các yêu cầu đơn giản có một hành động duy nhất (một lần tạo, một lần cập nhật hoặc một lần xóa), hãy sử dụng các hàm tương ứng 'createTask', 'updateTask', hoặc 'deleteTask'.

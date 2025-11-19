@@ -1,8 +1,13 @@
-# Tài liệu Yêu cầu Sản phẩm: Zenith Taskboard
+# Tài liệu Yêu cầu Sản phẩm: TaskHaha
 
 ## 1. Tổng quan
 
-Zenith Taskboard là một ứng dụng quản lý công việc thông minh theo phương pháp Kanban và lịch, tích hợp trợ lý AI được cung cấp bởi Gemini để tạo và truy vấn công việc thông qua trò chuyện bằng ngôn ngữ tự nhiên. Ứng dụng được thiết kế để cung cấp một cách liền mạch và trực quan để tổ chức quy trình làm việc, quản lý dự án cá nhân và theo sát các deadline, với giao diện chuyên biệt cho cả người dùng máy tính và di động. Ứng dụng hoàn toàn hoạt động ở phía máy khách (client-side), sử dụng bộ nhớ cục bộ của trình duyệt để lưu trữ dữ liệu.
+TaskHaha là một ứng dụng quản lý công việc thông minh theo phương pháp Kanban và lịch, tích hợp trợ lý AI được cung cấp bởi Gemini để tạo và truy vấn công việc thông qua trò chuyện bằng ngôn ngữ tự nhiên. Ứng dụng được thiết kế để cung cấp một cách liền mạch và trực quan để tổ chức quy trình làm việc, quản lý dự án cá nhân và theo sát các deadline, với giao diện chuyên biệt cho cả người dùng máy tính và di động.
+
+### Kiến trúc Lưu trữ Dữ liệu:
+Ứng dụng sử dụng một kiến trúc lưu trữ kết hợp:
+- **Khi triển khai trên Vercel:** Dữ liệu được lưu trữ một cách bền bỉ thông qua một Hàm Serverless, giao tiếp với cơ sở dữ liệu Vercel KV (được cung cấp bởi Upstash). Điều này đảm bảo dữ liệu của bạn được an toàn và đồng bộ trên các phiên làm việc.
+- **Trong các môi trường khác (ví dụ: phát triển cục bộ, AI Studio):** Ứng dụng sẽ tự động chuyển sang sử dụng `localStorage` của trình duyệt để lưu trữ tất cả dữ liệu. Điều này cho phép ứng dụng hoạt động đầy đủ mà không cần kết nối backend.
 
 ## 2. Các Tính năng Cốt lõi
 
@@ -69,29 +74,20 @@ Một AI đàm thoại được tích hợp vào ứng dụng để hợp lý h�
 - **Cá nhân hóa & Quy tắc (Chỉ cho Desktop)**:
   - Một cửa sổ "Tùy chỉnh Lời nhắc AI" cho phép người dùng cung cấp một "Ghi chú Hệ thống" với thông tin về bản thân và xác định một bộ "Quy tắc & Yêu cầu" mà AI phải tuân theo.
 
-### 2.4. Tích hợp Lịch Google
-
-- **Đồng bộ hóa Hai chiều (Tùy chọn):** Zenith Taskboard cung cấp tích hợp tùy chọn với lịch Google chính của người dùng.
-- **Từ Ứng dụng sang Lịch:** Các công việc có ngày hết hạn được tạo hoặc cập nhật trong ứng dụng có thể được tự động tạo hoặc cập nhật thành các sự kiện trên Lịch Google.
-- **Từ Lịch sang Ứng dụng:** Người dùng có thể bắt đầu một quá trình đồng bộ để nhập các sự kiện từ Lịch Google của họ vào bảng công việc. Ứng dụng sẽ cập nhật thông minh các công việc đã được liên kết hoặc tạo ra các công việc mới.
-- **Xác thực:** Việc tích hợp được bảo mật, sử dụng giao thức OAuth 2.0 của Google. Người dùng phải ủy quyền cho ứng dụng truy cập lịch của họ.
-
-### 2.5. Cấu hình & Cài đặt
+### 2.4. Cấu hình & Cài đặt
 
 - **Khóa API Gemini:** Trợ lý AI yêu cầu một khóa API Google Gemini do người dùng cung cấp. Một cửa sổ cài đặt ban đầu sẽ nhắc người dùng nhập khóa này.
-- **ID Khách hàng Google:** Việc tích hợp Lịch Google yêu cầu một ID Khách hàng OAuth 2.0 do người dùng cung cấp từ một dự án Google Cloud.
-- **Bộ nhớ cục bộ (Local Storage):** Tất cả các khóa, công việc, ghi chú và cài đặt được lưu trữ độc quyền trong bộ nhớ cục bộ của trình duyệt để đảm bảo quyền riêng tư.
+- **Lưu trữ:** Tất cả các khóa, công việc, ghi chú và cài đặt được lưu trữ theo kiến trúc được mô tả trong phần 1.
 
-### 2.6. Trải nghiệm Người dùng theo Nền tảng
+### 2.5. Trải nghiệm Người dùng theo Nền tảng
 
-#### 2.6.1. Trải nghiệm Desktop
+#### 2.5.1. Trải nghiệm Desktop
 Trải nghiệm đầy đủ tính năng được thiết kế cho màn hình lớn hơn.
 - **Cửa sổ Công việc Thống nhất**: Một cửa sổ duy nhất, toàn diện được sử dụng để tạo và chỉnh sửa công việc.
 - **Phím tắt**: `Ctrl+B` (hoặc `Cmd+B` trên macOS) để bật/tắt bảng trò chuyện của Trợ lý AI.
-- **Lưu trữ Dữ liệu**: Tất cả dữ liệu được lưu vào bộ nhớ cục bộ của trình duyệt.
-- **Cài đặt**: Một menu thả xuống cài đặt cung cấp quyền truy cập nhanh vào kết nối Lịch Google, đồng bộ hóa, bật/tắt hiển thị thẻ và thay đổi khóa API.
+- **Cài đặt**: Một menu thả xuống cài đặt cung cấp quyền truy cập nhanh vào việc bật/tắt hiển thị thẻ và thay đổi khóa API.
 
-#### 2.6.2. Trải nghiệm Di động (Màn hình < 768px)
+#### 2.5.2. Trải nghiệm Di động (Màn hình < 768px)
 Một giao diện được sắp xếp hợp lý, tập trung cho việc quản lý công việc khi di chuyển.
 - **Điều hướng dựa trên Tab**: Một thanh tab ở dưới cùng để điều hướng đơn giản.
 - **Chỉ các Chế độ xem Cốt lõi**: Giao diện được giới hạn ở hai tab thiết yếu:

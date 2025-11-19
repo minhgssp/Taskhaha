@@ -26,7 +26,7 @@ export default async function handler(
     token: API_TOKEN,
   });
 
-  const DATA_KEY = 'zenith_app_data';
+  const DATA_KEY = 'taskhaha_app_data';
 
   // Handle GET request to fetch data
   if (request.method === 'GET') {
