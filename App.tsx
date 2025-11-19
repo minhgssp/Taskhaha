@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 // Hooks
-import { useTaskManager } from './hooks/useTaskManager';
-import { useNotesManager } from './hooks/useNotesManager';
+import { useDataManager } from './hooks/useDataManager';
 
 // Components
 import { KanbanBoard } from './components/KanbanBoard';
@@ -15,7 +14,7 @@ import { TaskModal } from './components/TaskModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ApiKeyModal } from './components/ApiKeyModal';
-import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon } from './components/Icons';
+import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon, SyncIcon } from './components/Icons';
 import { MobileApp } from './components/MobileApp'; 
 
 // Services and Types
@@ -46,11 +45,20 @@ const App: React.FC = () => {
   const [kanbanFutureDays, setKanbanFutureDays] = useState(7); // Number of future days to show tasks for in Kanban
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
   
-  // Task Management
-  const { tasks, addTask, updateTask, deleteTask, moveTask } = useTaskManager();
-
-  // Notes Management
-  const { notes, addNote, updateNote, deleteNote } = useNotesManager();
+  // Centralized Data Management
+  const { 
+    tasks, 
+    notes, 
+    isLoading, 
+    error: dataError,
+    addTask, 
+    updateTask, 
+    deleteTask, 
+    moveTask, 
+    addNote, 
+    updateNote, 
+    deleteNote 
+  } = useDataManager();
 
   // Filter State
   const [activeCollection, setActiveCollection] = useState<Collection | 'All'>('All');
@@ -216,11 +224,11 @@ const App: React.FC = () => {
     await addTask(finalTaskData);
   };
 
-  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+  const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
     updateTask(taskId, updates);
   };
 
-  const handleDeleteTask = async (taskId: string) => {
+  const handleDeleteTask = (taskId: string) => {
     deleteTask(taskId);
   };
   
@@ -306,6 +314,14 @@ const App: React.FC = () => {
   };
 
   const ViewComponent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <SyncIcon className="w-12 h-12 text-accent animate-spin" />
+        </div>
+      );
+    }
+
     const props = {
       onEditTask: handleOpenTaskModal,
       onUpdateTask: handleUpdateTask,
@@ -325,7 +341,7 @@ const App: React.FC = () => {
       default:
         return null;
     }
-  }, [view, filteredTasks, kanbanFilteredTasks, moveTask, notes, addNote, updateNote, deleteNote, weeklyViewDays, activeTags, showTagsOnTasks, weeklyViewLayout, handleUpdateTask, handleOpenTaskModal, handleAddTaskForDate]);
+  }, [view, filteredTasks, kanbanFilteredTasks, moveTask, notes, addNote, updateNote, deleteNote, weeklyViewDays, activeTags, showTagsOnTasks, weeklyViewLayout, handleUpdateTask, handleOpenTaskModal, handleAddTaskForDate, isLoading]);
 
 
   if (isMobile) {
@@ -482,6 +498,12 @@ const App: React.FC = () => {
         <div className="flex-1 p-4 overflow-auto">{ViewComponent}</div>
         {isChatVisible && apiKeyExists && (<aside className="w-full md:w-1/3 max-w-md border-l border-divider flex-shrink-0"><ChatAssistant tasks={filteredTasks} onPlanProposed={handlePlanProposed} onUpdateRules={handleUpdateRules} systemNote={systemNote} rules={rules} activeTags={activeTags} activeCollection={activeCollection} chatMode={chatMode} onSetChatMode={setChatMode}/></aside>)}
       </main>
+
+      {dataError && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          <p>{dataError}</p>
+        </div>
+      )}
 
       <TaskModal isOpen={isTaskModalOpen} onClose={handleCloseTaskModal} onSave={handleSaveTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} taskToEdit={taskToEdit} initialDate={initialDateForNewTask}/>
       {isConfirmationModalOpen && proposedPlan && (<ConfirmationModal tasks={tasks} plan={proposedPlan} onConfirm={handleConfirmPlan} onCancel={() => setIsConfirmationModalOpen(false)}/>)}
