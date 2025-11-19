@@ -52,11 +52,46 @@
   }
 }
 </script>
-<!-- Add Babel for in-browser JSX/TSX transpilation -->
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body class="bg-bg-main">
     <div id="root"></div>
-    <script type="text/babel" data-type="module" src="/index.tsx"></script>
+    <script>
+      // Service Worker based loader to handle on-the-fly TSX/TS transpilation
+      (async () => {
+        if ('serviceWorker' in navigator) {
+          try {
+            // Register the service worker
+            await navigator.serviceWorker.register('/sw.js');
+
+            const loadMainScript = () => {
+              // Ensure we don't load the script multiple times
+              if (document.querySelector('script[src="/index.tsx"]')) return;
+              
+              console.log('Service Worker is controlling the page. Loading main script.');
+              const script = document.createElement('script');
+              script.type = 'module';
+              script.src = '/index.tsx'; // The SW will now intercept this request
+              document.body.appendChild(script);
+            };
+
+            // Check if a service worker is already controlling the page.
+            if (navigator.serviceWorker.controller) {
+              loadMainScript();
+            } else {
+              // If not, wait for the 'controllerchange' event.
+              // This fires when the service worker has successfully taken control.
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                loadMainScript();
+              });
+            }
+          } catch (error) {
+            console.error('Service Worker registration failed:', error);
+            document.getElementById('root').innerHTML = 'Failed to load application assets. Please try refreshing.';
+          }
+        } else {
+          document.getElementById('root').innerHTML = 'Service Workers are not supported in this browser. The application cannot run.';
+        }
+      })();
+    </script>
   </body>
 </html>
