@@ -5,22 +5,14 @@ import { SendIcon, BotIcon, UserIcon, NewChatIcon } from './Icons.tsx';
 
 // A simple component to render basic markdown.
 const MarkdownContent: React.FC<{ text: string }> = ({ text }) => {
-  // This function converts a string with basic markdown into an HTML string.
-  // It's not a full parser, but handles common formatting like bold, italics,
-  // inline code, and line breaks for better readability.
   const toHtml = (markdown: string) => {
     return markdown
-      // Escape basic HTML characters to prevent XSS.
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      // **bold** -> <strong>bold</strong>
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      // *italic* -> <em>italic</em>
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // `code` -> <code>code</code>
       .replace(/`(.*?)`/g, '<code class="bg-gray-200 text-accent px-1.5 py-0.5 rounded-md font-mono text-xs">$1</code>')
-      // \n -> <br />
       .replace(/\n/g, '<br />');
   };
 
@@ -35,18 +27,19 @@ const MarkdownContent: React.FC<{ text: string }> = ({ text }) => {
 interface ChatAssistantProps {
   tasks: Task[];
   onPlanProposed: (plan: Plan) => void;
-  onUpdateRules: (newRules: string) => void;
   systemNote: string;
   rules: string;
   activeTags: string[];
   activeCollection: Collection | 'All';
   chatMode: ChatMode;
   onSetChatMode: (mode: ChatMode) => void;
+  apiKey: string | null;
+  handleApiError: () => void;
 }
 
 const initialMessage: Message = { sender: 'bot', text: "Xin chào! Tôi là trợ lý của bạn. Tôi có hai chế độ: sử dụng chế độ 'Task' để quản lý công việc của bạn, hoặc chuyển sang 'Freechat' để có một cuộc nói chuyện thông thường. Ở chế độ Task, tôi có thể thêm, sửa và xóa công việc cho bạn bằng ngôn ngữ tự nhiên. Chỉ cần cho tôi biết bạn cần gì." };
 
-export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanProposed, onUpdateRules, systemNote, rules, activeTags, activeCollection, chatMode, onSetChatMode }) => {
+export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanProposed, systemNote, rules, activeTags, activeCollection, chatMode, onSetChatMode, apiKey, handleApiError }) => {
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -61,17 +54,16 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanPropo
   };
 
   const handleSend = async () => {
-    if (input.trim() === '' || isLoading) return;
+    if (input.trim() === '' || isLoading || !apiKey) return;
 
     const userMessage: Message = { sender: 'user', text: input };
-    const promptForApi = input; // Capture prompt before clearing input
+    const promptForApi = input;
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // Pass the current messages array as history
-      const response = await getChatResponse(promptForApi, messages, tasks, systemNote, rules, activeTags, activeCollection, chatMode);
+      const response = await getChatResponse(promptForApi, apiKey, messages, tasks, systemNote, rules, activeTags, activeCollection, chatMode);
 
       let botMessage: Message | null = null;
       let plan: Plan = { creations: [], updates: [], deletions: [] };
@@ -98,17 +90,12 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanPropo
             };
             hasPlan = true;
             break;
-        case 'updateRulesCall':
-          onUpdateRules(response.data.newRules);
-          botMessage = { sender: 'bot', text: "Tôi đã cập nhật các quy tắc và yêu cầu của mình theo yêu cầu của bạn." };
-          break;
         case 'text':
           botMessage = { sender: 'bot', text: response.data };
           break;
       }
 
       if (hasPlan) {
-        // If there's at least one action, propose the plan for confirmation
         if (plan.creations.length > 0 || plan.updates.length > 0 || plan.deletions.length > 0) {
             botMessage = { sender: 'bot', text: "Tôi đã soạn một kế hoạch dựa trên yêu cầu của bạn. Vui lòng xem lại và xác nhận các hành động." };
             onPlanProposed(plan);
@@ -121,10 +108,14 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanPropo
         setMessages(prev => [...prev, botMessage as Message]);
       }
 
-    } catch (error) {
-      console.error("Error with Gemini API:", error);
-      const errorMessage: Message = { sender: 'bot', text: "Xin lỗi, tôi đang gặp sự cố kết nối ngay bây giờ. Vui lòng thử lại sau." };
-      setMessages(prev => [...prev, errorMessage]);
+    } catch (error: any) {
+        console.error("Error with Gemini API:", error);
+        if (error.isQuotaError) {
+            handleApiError();
+        } else {
+            const errorMessage: Message = { sender: 'bot', text: "Xin lỗi, tôi đang gặp sự cố kết nối ngay bây giờ. Vui lòng thử lại sau." };
+            setMessages(prev => [...prev, errorMessage]);
+        }
     } finally {
       setIsLoading(false);
     }
@@ -205,11 +196,11 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ tasks, onPlanPropo
             onKeyPress={handleKeyPress}
             placeholder={placeholderText}
             className="w-full bg-transparent p-3 text-primary-text focus:outline-none placeholder:text-secondary-text"
-            disabled={isLoading}
+            disabled={isLoading || !apiKey}
           />
           <button
             onClick={handleSend}
-            disabled={isLoading}
+            disabled={isLoading || !apiKey}
             className="p-3 text-secondary-text hover:text-accent disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <SendIcon className="w-6 h-6" />

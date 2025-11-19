@@ -5,13 +5,15 @@ interface ApiKeyModalProps {
   onSave: (apiKey: string) => void;
   onClose: () => void;
   isCancellable: boolean;
+  errorMessage?: string | null;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClose, isCancellable }) => {
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClose, isCancellable, errorMessage }) => {
   const [apiKey, setApiKey] = useState('');
   
   useEffect(() => {
     if (isOpen) {
+        // Always clear the input for security
         setApiKey('');
     }
   }, [isOpen]);
@@ -41,16 +43,22 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
         className="bg-surface rounded-lg shadow-2xl p-6 w-full max-w-md text-primary-text flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-2 text-primary-text">Enter Your Gemini API Key</h2>
-        <p className="text-sm text-secondary-text mb-4">
-          To enable the AI Assistant, please provide your Google Gemini API key. Your key is stored securely in your browser's local storage and is never sent to our servers.
-        </p>
+        <h2 className="text-2xl font-bold mb-2 text-primary-text">{errorMessage ? 'API Key Issue' : 'Update Your Gemini API Key'}</h2>
+        
+        {errorMessage ? (
+          <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md mb-4">{errorMessage}</p>
+        ) : (
+          <p className="text-sm text-secondary-text mb-4">
+            To enable the AI Assistant, please provide your Google Gemini API key. Your key is stored securely in your browser's local storage and is never sent to our servers.
+          </p>
+        )}
+        
         <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:text-accent-dark font-semibold mb-4">
-          Get your API key from Google AI Studio &rarr;
+          Get a new API key from Google AI Studio &rarr;
         </a>
         
         <div>
-          <label htmlFor="apiKey" className="block text-sm font-medium text-secondary-text mb-1">API Key</label>
+          <label htmlFor="apiKey" className="block text-sm font-medium text-secondary-text mb-1">New API Key</label>
           <input 
             type="password" 
             name="apiKey" 
@@ -60,7 +68,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
             onKeyPress={handleKeyPress}
             className="w-full bg-gray-100 p-2 rounded border border-divider focus:outline-none focus:ring-2 focus:ring-accent" 
             required 
-            placeholder="Enter your key here"
+            placeholder="Enter your new key here"
+            autoComplete="off"
           />
         </div>
         
@@ -79,7 +88,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
             onClick={handleSave} 
             className="px-4 py-2 rounded bg-accent-dark hover:bg-indigo-800 text-white transition-colors"
           >
-            Save & Continue
+            Save Key
           </button>
         </div>
       </div>

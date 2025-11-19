@@ -2,15 +2,13 @@ import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import type { Task, Message, Plan, Collection, ChatMode } from '../types.ts';
 import { generateSystemPrompt, generateFreechatSystemPrompt } from "./promptService.ts";
 
-const API_KEY_STORAGE_KEY = 'taskhaha_gemini_api_key';
-
-function getAiClient(): GoogleGenAI {
-  const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-  if (!apiKey) {
-    alert('Gemini API key not found. Please set it via the settings menu.');
-    throw new Error("Gemini API key not found in localStorage.");
+class QuotaError extends Error {
+  public isQuotaError: boolean;
+  constructor(message: string) {
+    super(message);
+    this.name = 'QuotaError';
+    this.isQuotaError = true;
   }
-  return new GoogleGenAI({ apiKey });
 }
 
 const createTaskSchema = {
@@ -84,68 +82,73 @@ const updateTaskFunctionDeclaration: FunctionDeclaration = {
     parameters: updateTaskSchema,
 };
 
-const updateRulesFunctionDeclaration: FunctionDeclaration = {
-    name: 'updateRules',
-    parameters: {
-        type: Type.OBJECT,
-        description: "Updates the assistant's core rules and requirements based on user instruction.",
-        properties: {
-            newRules: { type: Type.STRING, description: 'The new, complete set of rules for the assistant to follow.' }
-        },
-        required: ['newRules']
-    }
-};
-
 type GeminiResponse = 
   | { type: 'createTaskCall'; data: any }
   | { type: 'updateTaskCall'; data: any }
   | { type: 'deleteTaskCall'; data: any }
   | { type: 'proposePlanCall'; data: Plan }
-  | { type: 'updateRulesCall'; data: any }
   | { type: 'text'; data: string };
 
-export async function getChatResponse(prompt: string, history: Message[], tasks: Task[], systemNote: string, rules: string, activeTags: string[], activeCollection: Collection | 'All', chatMode: ChatMode): Promise<GeminiResponse> {
-  const ai = getAiClient();
+export async function getChatResponse(
+  prompt: string, 
+  apiKey: string,
+  history: Message[], 
+  tasks: Task[], 
+  systemNote: string, 
+  rules: string, 
+  activeTags: string[], 
+  activeCollection: Collection | 'All', 
+  chatMode: ChatMode
+): Promise<GeminiResponse> {
+  
+  const ai = new GoogleGenAI({ apiKey });
   const model = 'gemini-2.5-flash';
   
-  // Map the app's message format to the Gemini API's format, excluding the initial bot greeting.
   const conversationHistory = history.slice(1).map(msg => ({
       role: msg.sender === 'user' ? ('user' as const) : ('model' as const),
       parts: [{ text: msg.text }]
   }));
-  
-  if (chatMode === 'freechat') {
-    const systemInstruction = generateFreechatSystemPrompt({ systemNote });
+
+  try {
+    if (chatMode === 'freechat') {
+        const systemInstruction = generateFreechatSystemPrompt({ systemNote });
+        const response = await ai.models.generateContent({
+            model,
+            contents: [...conversationHistory, { role: 'user', parts: [{ text: prompt }] }],
+            config: { systemInstruction },
+        });
+        return { type: 'text', data: response.text };
+    }
+
+    // --- Task Mode Logic ---
+    const systemInstruction = generateSystemPrompt({ tasks, systemNote, rules, activeTags, activeCollection });
     const response = await ai.models.generateContent({
         model,
         contents: [...conversationHistory, { role: 'user', parts: [{ text: prompt }] }],
         config: {
             systemInstruction,
+            tools: [{ functionDeclarations: [createTaskFunctionDeclaration, updateTaskFunctionDeclaration, deleteTaskFunctionDeclaration, proposePlanFunctionDeclaration] }],
         },
     });
+
+    const functionCalls = response.functionCalls;
+    if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0];
+        if (call.name === 'createTask') return { type: 'createTaskCall', data: call.args };
+        if (call.name === 'updateTask') return { type: 'updateTaskCall', data: call.args };
+        if (call.name === 'deleteTask') return { type: 'deleteTaskCall', data: call.args };
+        if (call.name === 'proposePlan') return { type: 'proposePlanCall', data: call.args as unknown as Plan };
+    }
+
     return { type: 'text', data: response.text };
+
+  } catch(e: any) {
+    // Check for specific quota-related error messages from the Gemini API
+    const errorMessage = e.toString().toLowerCase();
+    if (errorMessage.includes('quota') || errorMessage.includes('api key not valid')) {
+        throw new QuotaError("API key has exceeded its quota or is invalid.");
+    }
+    // Re-throw other errors
+    throw e;
   }
-
-  // --- Task Mode Logic ---
-  const systemInstruction = generateSystemPrompt({ tasks, systemNote, rules, activeTags, activeCollection });
-  const response = await ai.models.generateContent({
-    model,
-    contents: [...conversationHistory, { role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      systemInstruction,
-      tools: [{ functionDeclarations: [createTaskFunctionDeclaration, updateTaskFunctionDeclaration, deleteTaskFunctionDeclaration, proposePlanFunctionDeclaration, updateRulesFunctionDeclaration] }],
-    },
-  });
-
-  const functionCalls = response.functionCalls;
-  if (functionCalls && functionCalls.length > 0) {
-    const call = functionCalls[0];
-    if (call.name === 'createTask') return { type: 'createTaskCall', data: call.args };
-    if (call.name === 'updateTask') return { type: 'updateTaskCall', data: call.args };
-    if (call.name === 'deleteTask') return { type: 'deleteTaskCall', data: call.args };
-    if (call.name === 'proposePlan') return { type: 'proposePlanCall', data: call.args as unknown as Plan };
-    if (call.name === 'updateRules') return { type: 'updateRulesCall', data: call.args };
-  }
-
-  return { type: 'text', data: response.text };
 }

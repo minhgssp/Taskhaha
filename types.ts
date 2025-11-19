@@ -2,6 +2,7 @@ export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 export type Collection = 'Work' | 'Life';
 export type TaskColor = 'red' | 'yellow' | 'teal' | 'pink';
 export type ChatMode = 'task' | 'freechat';
+export type AuthState = 'pending' | 'guest' | 'premium';
 
 export interface Task {
   id: string;

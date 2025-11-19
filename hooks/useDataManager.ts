@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Task, Note, TaskStatus, Collection } from '../types.ts';
+import type { Task, Note, TaskStatus, AuthState } from '../types.ts';
 
 interface AppData {
   tasks: Task[];
@@ -7,12 +7,10 @@ interface AppData {
 }
 
 const DEBOUNCE_DELAY = 1500; // 1.5 seconds
-const LOCAL_STORAGE_KEY = 'taskhaha_app_data'; // Key for local storage fallback
-
-// Check if running in AI Studio environment
+const GUEST_STORAGE_KEY = 'taskhaha_guest_data'; 
 const isAiStudio = typeof window !== 'undefined' && !!(window as any).aistudio;
 
-export const useDataManager = () => {
+export const useDataManager = (authState: AuthState) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,28 +23,32 @@ export const useDataManager = () => {
     latestDataRef.current = { tasks, notes };
   }, [tasks, notes]);
 
-  // Fetch initial data from API or localStorage
+  // Fetch initial data based on auth state
   useEffect(() => {
+    if (authState === 'pending') {
+        setIsLoading(false);
+        return;
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        if (isAiStudio) {
-          // AI Studio Environment: Use localStorage
-          const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
-          const data: AppData = localData ? JSON.parse(localData) : { tasks: [], notes: [] };
-          setTasks(data.tasks || []);
-          setNotes(data.notes || []);
-        } else {
-          // Deployed Environment (Vercel): Use API
+        let data: AppData = { tasks: [], notes: [] };
+        if (authState === 'guest' || isAiStudio) {
+          // Guest mode or AI Studio: Use localStorage
+          const localData = localStorage.getItem(GUEST_STORAGE_KEY);
+          data = localData ? JSON.parse(localData) : { tasks: [], notes: [] };
+        } else { // authState is 'premium'
+          // Deployed Environment: Use API
           const response = await fetch('/api/data');
           if (!response.ok) {
             throw new Error(`Failed to fetch data: ${response.statusText}`);
           }
-          const data: AppData = await response.json();
-          setTasks(data.tasks || []);
-          setNotes(data.notes || []);
+          data = await response.json();
         }
-        setError(null);
+        setTasks(data.tasks || []);
+        setNotes(data.notes || []);
       } catch (err: any) {
         console.error("Error fetching initial data:", err);
         setError("Could not load data. Please try again later.");
@@ -58,49 +60,42 @@ export const useDataManager = () => {
     };
 
     fetchData();
-  }, []);
+  }, [authState]);
 
-  // Debounced save function for API or localStorage
+  // Debounced save function based on auth state
   const saveData = useCallback((data: AppData) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
     
     debounceTimeoutRef.current = setTimeout(async () => {
+      if (authState === 'pending') return;
       try {
-        if (isAiStudio) {
-          // AI Studio: Save to localStorage
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-        } else {
-          // Deployed: Save to API
+        setError(null);
+        if (authState === 'guest' || isAiStudio) {
+          localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(data));
+        } else { // authState is 'premium'
           await fetch('/api/data', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
           });
         }
-        setError(null);
       } catch (err) {
         console.error("Error saving data:", err);
         setError("Failed to save changes. Please check your connection.");
       }
     }, DEBOUNCE_DELAY);
-  }, []);
+  }, [authState]);
 
-  // Centralized state update and trigger for saving
   const updateState = useCallback(<T extends keyof AppData>(stateKey: T, newState: AppData[T]) => {
     const newAppData: AppData = { ...latestDataRef.current, [stateKey]: newState };
-    if (stateKey === 'tasks') {
-        setTasks(newState as Task[]);
-    } else if (stateKey === 'notes') {
-        setNotes(newState as Note[]);
-    }
+    if (stateKey === 'tasks') setTasks(newState as Task[]);
+    else if (stateKey === 'notes') setNotes(newState as Note[]);
     saveData(newAppData);
   }, [saveData]);
 
-  // --- Task Management Functions ---
+  // --- Task Management Functions (unchanged logic) ---
   const addTask = useCallback((taskData: Omit<Task, 'id' | 'order'>): Promise<Task> => {
     return new Promise(resolve => {
         const currentTasks = latestDataRef.current.tasks;
@@ -153,15 +148,11 @@ export const useDataManager = () => {
   }, [updateState]);
 
 
-  // --- Notes Management Functions ---
+  // --- Notes Management Functions (unchanged logic) ---
   const addNote = useCallback(() => {
     const currentNotes = latestDataRef.current.notes;
     const newId = (Math.max(...currentNotes.map(n => parseInt(n.id, 10)), 0) + 1).toString();
-    const newNote: Note = {
-      id: newId,
-      title: `Ghi chú mới ${newId}`,
-      content: ''
-    };
+    const newNote: Note = { id: newId, title: `Ghi chú mới ${newId}`, content: '' };
     updateState('notes', [...currentNotes, newNote]);
     return newNote.id;
   }, [updateState]);
@@ -178,18 +169,9 @@ export const useDataManager = () => {
     updateState('notes', newNotes);
   }, [updateState]);
 
-
   return { 
-    tasks, 
-    notes, 
-    isLoading,
-    error,
-    addTask, 
-    updateTask, 
-    deleteTask, 
-    moveTask,
-    addNote,
-    updateNote,
-    deleteNote
+    tasks, notes, isLoading, error,
+    addTask, updateTask, deleteTask, moveTask,
+    addNote, updateNote, deleteNote
   };
 };
