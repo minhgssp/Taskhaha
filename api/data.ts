@@ -1,5 +1,16 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+// This is the crucial fix. The Vercel Upstash integration creates
+// environment variables with a prefix (e.g., TASKMANAGER_KV_URL).
+// The default `kv` export from '@vercel/kv' looks for unprefixed
+// variables (`KV_URL`). By creating our own client, we can explicitly
+// tell it which environment variables to use.
+const kv = createClient({
+  url: process.env.TASKMANAGER_KV_URL || process.env.KV_URL,
+  token: process.env.TASKMANAGER_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN,
+});
+
 
 // Define a consistent key for our data blob in Vercel KV
 const DATA_KEY = 'zenith_app_data';
