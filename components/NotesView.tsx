@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import type { Note } from '../types';
-import { PlusIcon, TrashIcon } from './Icons';
+import type { Note } from '../types.ts';
+import { PlusIcon, TrashIcon } from './Icons.tsx';
 
 interface NotesViewProps {
   notes: Note[];

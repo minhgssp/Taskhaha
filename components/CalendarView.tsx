@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Task, TaskColor } from '../types';
+import type { Task, TaskColor } from '../types.ts';
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

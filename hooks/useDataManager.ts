@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Task, Note, TaskStatus, Collection } from '../types';
+import type { Task, Note, TaskStatus, Collection } from '../types.ts';
 
 interface AppData {
   tasks: Task[];

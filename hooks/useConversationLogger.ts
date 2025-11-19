@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Message } from '../types';
+import type { Message } from '../types.ts';
 
 const LOG_STORAGE_KEY = 'zenith_chat_log';
 

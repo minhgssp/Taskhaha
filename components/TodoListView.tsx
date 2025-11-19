@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Task, TaskStatus, TaskColor } from '../types';
+import type { Task, TaskStatus, TaskColor } from '../types.ts';
 
 interface TodoListViewProps {
   tasks: Task[];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Plan, PlanAction, Task, UpdateActionData, DeleteActionData } from '../types';
-import { TrashIcon } from './Icons';
+import type { Plan, PlanAction, Task, UpdateActionData, DeleteActionData } from '../types.ts';
+import { TrashIcon } from './Icons.tsx';
 
 interface ConfirmationModalProps {
   plan: Plan;

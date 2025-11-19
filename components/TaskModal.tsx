@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { Task, Collection, TaskColor } from '../types';
-import { TrashIcon } from './Icons';
+import type { Task, Collection, TaskColor } from '../types.ts';
+import { TrashIcon } from './Icons.tsx';
 
 interface TaskModalProps {
   isOpen: boolean;

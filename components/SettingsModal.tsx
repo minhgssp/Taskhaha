@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SparklesIcon } from './Icons';
+import { SparklesIcon } from './Icons.tsx';
 
 interface SettingsModalProps {
   isOpen: boolean;

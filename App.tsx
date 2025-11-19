@@ -1,24 +1,24 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 // Hooks
-import { useDataManager } from './hooks/useDataManager';
+import { useDataManager } from './hooks/useDataManager.ts';
 
 // Components
-import { KanbanBoard } from './components/KanbanBoard';
-import { CalendarView } from './components/CalendarView';
-import { WeeklyView } from './components/WeeklyView';
-import { TodoListView } from './components/TodoListView';
-import { NotesView } from './components/NotesView';
-import { ChatAssistant } from './components/ChatAssistant';
-import { TaskModal } from './components/TaskModal';
-import { ConfirmationModal } from './components/ConfirmationModal';
-import { SettingsModal } from './components/SettingsModal';
-import { ApiKeyModal } from './components/ApiKeyModal';
-import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon, SyncIcon } from './components/Icons';
-import { MobileApp } from './components/MobileApp'; 
+import { KanbanBoard } from './components/KanbanBoard.tsx';
+import { CalendarView } from './components/CalendarView.tsx';
+import { WeeklyView } from './components/WeeklyView.tsx';
+import { TodoListView } from './components/TodoListView.tsx';
+import { NotesView } from './components/NotesView.tsx';
+import { ChatAssistant } from './components/ChatAssistant.tsx';
+import { TaskModal } from './components/TaskModal.tsx';
+import { ConfirmationModal } from './components/ConfirmationModal.tsx';
+import { SettingsModal } from './components/SettingsModal.tsx';
+import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon, SyncIcon } from './components/Icons.tsx';
+import { MobileApp } from './components/MobileApp.tsx'; 
 
 // Services and Types
-import type { Task, Column, Plan, CreateActionData, UpdateActionData, DeleteActionData, Collection, ChatMode } from './types';
+import type { Task, Column, Plan, CreateActionData, UpdateActionData, DeleteActionData, Collection, ChatMode } from './types.ts';
 
 type View = 'kanban' | 'calendar' | 'weekly' | 'list' | 'notes';
 type WeeklyViewLayout = 'simple' | 'grid';

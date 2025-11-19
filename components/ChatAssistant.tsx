@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getChatResponse } from '../services/geminiService';
-import type { Task, Message, Plan, Collection, ChatMode } from '../types';
-import { SendIcon, BotIcon, UserIcon, NewChatIcon } from './Icons';
+import { getChatResponse } from '../services/geminiService.ts';
+import type { Task, Message, Plan, Collection, ChatMode } from '../types.ts';
+import { SendIcon, BotIcon, UserIcon, NewChatIcon } from './Icons.tsx';
 
 // A simple component to render basic markdown.
 const MarkdownContent: React.FC<{ text: string }> = ({ text }) => {

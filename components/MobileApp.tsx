@@ -1,9 +1,10 @@
 
+
 import React, { useState } from 'react';
-import type { Task } from '../types';
-import { ChatAssistant } from './ChatAssistant';
-import { TodoListView } from './TodoListView';
-import { MessageIcon, ListIcon } from './Icons';
+import type { Task } from '../types.ts';
+import { ChatAssistant } from './ChatAssistant.tsx';
+import { TodoListView } from './TodoListView.tsx';
+import { MessageIcon, ListIcon } from './Icons.tsx';
 
 type Tab = 'chat' | 'list';
 

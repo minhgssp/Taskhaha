@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
-import type { Task, Message, Plan, Collection, ChatMode } from '../types';
-import { generateSystemPrompt, generateFreechatSystemPrompt } from "./promptService";
+import type { Task, Message, Plan, Collection, ChatMode } from '../types.ts';
+import { generateSystemPrompt, generateFreechatSystemPrompt } from "./promptService.ts";
 
 const API_KEY_STORAGE_KEY = 'zenith_gemini_api_key';
 

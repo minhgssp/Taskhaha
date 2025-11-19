@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Task, Column, TaskStatus, TaskColor } from '../types';
+import type { Task, Column, TaskStatus, TaskColor } from '../types.ts';
 
 const isDateInPast = (dateStr?: string): boolean => {
     if (!dateStr) return false;

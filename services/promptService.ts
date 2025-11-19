@@ -1,4 +1,4 @@
-import type { Task, Collection } from '../types';
+import type { Task, Collection } from '../types.ts';
 
 interface GeneratePromptParams {
   tasks: Task[];

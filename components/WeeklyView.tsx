@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import type { Task, TaskColor } from '../types';
-import { PlusIcon } from './Icons';
+import type { Task, TaskColor } from '../types.ts';
+import { PlusIcon } from './Icons.tsx';
 
 const isDateInPast = (dateStr?: string): boolean => {
     if (!dateStr) return false;
