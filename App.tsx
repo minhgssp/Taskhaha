@@ -190,7 +190,6 @@ const App: React.FC = () => {
     setApiKeyError(null);
   };
 
-  // Other handlers... (most are unchanged)
   const handleOpenTaskModal = (task?: Task) => { setTaskToEdit(task || null); setInitialDateForNewTask(undefined); setIsTaskModalOpen(true); };
   const handleAddTaskForDate = (date: string) => { setTaskToEdit(null); setInitialDateForNewTask(date); setIsTaskModalOpen(true); };
   const handleCloseTaskModal = () => { setIsTaskModalOpen(false); setTaskToEdit(null); setInitialDateForNewTask(undefined); };
@@ -204,14 +203,54 @@ const App: React.FC = () => {
   };
   const handleUpdateTask = (taskId: string, updates: Partial<Task>) => { updateTask(taskId, updates); };
   const handleDeleteTask = (taskId: string) => { deleteTask(taskId); };
-  const handlePlanProposed = (plan: Plan) => { setProposedPlan(plan); setIsConfirmationModalOpen(true); };
-  const executePlanAction = async (action: CreateActionData | UpdateActionData | DeleteActionData, type: 'CREATE' | 'UPDATE' | 'DELETE') => { /* ... */ };
-  const handleConfirmPlan = async (plan: Plan) => { /* ... unchanged ... */
-      for (const c of (plan.creations || [])) await executePlanAction(c, 'CREATE');
-      for (const u of (plan.updates || [])) await executePlanAction(u, 'UPDATE');
-      for (const d of (plan.deletions || [])) await executePlanAction(d, 'DELETE');
-      setIsConfirmationModalOpen(false); setProposedPlan(null);
+  
+  const handlePlanProposed = (plan: Plan) => { 
+    setProposedPlan(plan); 
+    setIsConfirmationModalOpen(true); 
   };
+
+  const executePlanAction = async (action: CreateActionData | UpdateActionData | DeleteActionData, type: 'CREATE' | 'UPDATE' | 'DELETE') => {
+    switch (type) {
+      case 'CREATE':
+        await addTask(action as CreateActionData);
+        break;
+      case 'UPDATE':
+        {
+          const { taskId, ...updates } = action as UpdateActionData;
+          
+          const mappedUpdates: Partial<Task> = {};
+          if (updates.newTitle !== undefined) mappedUpdates.title = updates.newTitle;
+          if (updates.newStatus !== undefined) mappedUpdates.status = updates.newStatus;
+          if (updates.newCollection !== undefined) mappedUpdates.collection = updates.newCollection;
+          if (updates.newDescription !== undefined) mappedUpdates.description = updates.newDescription;
+          if (updates.newDueDate !== undefined) mappedUpdates.dueDate = updates.newDueDate;
+          if (updates.newDueTime !== undefined) mappedUpdates.dueTime = updates.newDueTime;
+          if (updates.newTags !== undefined) mappedUpdates.tags = updates.newTags;
+          if (updates.newColor !== undefined) mappedUpdates.color = updates.newColor;
+
+          updateTask(taskId, mappedUpdates);
+        }
+        break;
+      case 'DELETE':
+        deleteTask((action as DeleteActionData).taskId);
+        break;
+    }
+  };
+  
+  const handleConfirmPlan = async (plan: Plan) => {
+      for (const c of (plan.creations || [])) {
+        await executePlanAction(c, 'CREATE');
+      }
+      for (const u of (plan.updates || [])) {
+        await executePlanAction(u, 'UPDATE');
+      }
+      for (const d of (plan.deletions || [])) {
+        await executePlanAction(d, 'DELETE');
+      }
+      setIsConfirmationModalOpen(false); 
+      setProposedPlan(null);
+  };
+
   const handleSaveSettings = (newSystemNote: string, newRules: string) => {
       setSystemNote(newSystemNote); localStorage.setItem(SYSTEM_NOTE_KEY, newSystemNote);
       setRules(newRules); localStorage.setItem(RULES_KEY, newRules);
