@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 // Hooks
@@ -16,7 +17,7 @@ import { SettingsModal } from './components/SettingsModal.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { LoginModal } from './components/LoginModal.tsx';
 import { Notification } from './components/Notification.tsx';
-import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon, SyncIcon } from './components/Icons.tsx';
+import { KanbanIcon, CalendarIcon, MessageIcon, ListIcon, PlusIcon, WeekIcon, SettingsIcon, NotesIcon, TagIcon, PencilIcon, EyeIcon, EyeOffIcon, KeyIcon, BriefcaseIcon, HomeIcon, ChevronDownIcon, GridIcon, SyncIcon, LogOutIcon } from './components/Icons.tsx';
 import { MobileApp } from './components/MobileApp.tsx'; 
 
 // Services and Types
@@ -36,10 +37,13 @@ const SYSTEM_NOTE_KEY = 'taskhaha_system_note';
 const RULES_KEY = 'taskhaha_rules';
 const TAG_VISIBILITY_KEY = 'taskhaha_show_tags_on_tasks';
 const API_KEY_STORAGE_KEY = 'taskhaha_gemini_api_key';
+const AUTH_STATE_KEY = 'taskhaha_auth_state';
 const MOBILE_BREAKPOINT = 768;
 
 const App: React.FC = () => {
-  const [authState, setAuthState] = useState<AuthState>('pending');
+  const [authState, setAuthState] = useState<AuthState>(() => {
+    return (localStorage.getItem(AUTH_STATE_KEY) as AuthState) || 'pending';
+  });
   const [view, setView] = useState<View>('weekly');
   const [weeklyViewLayout, setWeeklyViewLayout] = useState<WeeklyViewLayout>('simple');
   const [isChatVisible, setIsChatVisible] = useState(true);
@@ -155,6 +159,20 @@ const App: React.FC = () => {
   const showNotification = (message: string, type: 'success' | 'error', duration = 3000) => {
       setNotification({ message, type });
       setTimeout(() => setNotification(null), duration);
+  };
+  
+  const handleLoginSuccess = (state: AuthState) => {
+      localStorage.setItem(AUTH_STATE_KEY, state);
+      setAuthState(state);
+  };
+  
+  const handleLogout = () => {
+      localStorage.removeItem(AUTH_STATE_KEY);
+      localStorage.removeItem(API_KEY_STORAGE_KEY); // Also clear local API key on logout
+      setLocalApiKey(null);
+      setDefaultApiKey(null);
+      setAuthState('pending');
+      showNotification('You have been logged out successfully.', 'success');
   };
 
   const handleApiError = useCallback(() => {
@@ -278,7 +296,7 @@ const App: React.FC = () => {
   return (
     <>
       {authState === 'pending' ? (
-        <LoginModal onLoginSuccess={setAuthState} onShowError={showNotification} />
+        <LoginModal onLoginSuccess={handleLoginSuccess} onShowError={showNotification} />
       ) : isMobile ? (
         <>
           <MobileApp
@@ -385,6 +403,11 @@ const App: React.FC = () => {
                                 <button onClick={() => { setIsSettingsModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-primary-text hover:bg-gray-100 flex items-center gap-3">
                                     <PencilIcon className="w-5 h-5" />
                                     <span>Customize AI Prompt</span>
+                                </button>
+                                <div className="border-t border-divider my-1"></div>
+                                <button onClick={() => { handleLogout(); setIsSettingsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
+                                    <LogOutIcon className="w-5 h-5" />
+                                    <span>Logout</span>
                                 </button>
                             </div>
                         </div>
