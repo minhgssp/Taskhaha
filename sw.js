@@ -1,18 +1,22 @@
 // sw.js - Service Worker for in-browser transpilation of TSX/TS files
 
 const BABEL_URL = 'https://unpkg.com/@babel/standalone/babel.min.js';
-let babel;
 
-// Import Babel as soon as the service worker starts
-try {
-  self.importScripts(BABEL_URL);
-  babel = self.Babel;
-  if (!babel) {
-    console.error("Babel could not be loaded in Service Worker.");
-  }
-} catch (error) {
+// Create a promise that resolves when Babel is loaded and ready.
+const babelReadyPromise = new Promise((resolve, reject) => {
+  try {
+    self.importScripts(BABEL_URL);
+    if (self.Babel) {
+      console.log('Babel loaded successfully in Service Worker.');
+      resolve(self.Babel);
+    } else {
+      reject(new Error("Babel object not found after script import."));
+    }
+  } catch (error) {
     console.error("Failed to import Babel:", error);
-}
+    reject(error);
+  }
+});
 
 
 // Intercept fetch requests
@@ -28,6 +32,9 @@ self.addEventListener('fetch', (event) => {
 
 async function transpileAndServe(request) {
   try {
+    // Crucially, wait for Babel to be ready before proceeding.
+    const babel = await babelReadyPromise;
+    
     const fileContentResponse = await fetch(request);
 
     if (!fileContentResponse.ok) {
@@ -35,10 +42,6 @@ async function transpileAndServe(request) {
     }
     
     const fileContent = await fileContentResponse.text();
-
-    if (!babel) {
-      throw new Error("Babel is not available for transpilation.");
-    }
 
     // Transpile the code using Babel
     const transformedCode = babel.transform(fileContent, {
