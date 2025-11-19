@@ -2,6 +2,7 @@
   "name": "zenith-taskboard-serverless",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Dependencies for Vercel Serverless Functions",
   "dependencies": {
     "@vercel/kv": "^3.0.0"
