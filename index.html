@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zenith Taskboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              'bg-main': '#F9F8FD',
+              'surface': '#FFFFFF',
+              'primary-text': '#242568',
+              'secondary-text': '#8A8A8E',
+              'accent': '#4339F2',
+              'accent-dark': '#242568',
+              'divider': '#EAEAEA',
+              // Card Colors
+              'card-green-bg': '#E4F8E9',
+              'card-purple-bg': '#E8E7FC',
+              'card-orange-bg': '#FFF1E5',
+              'card-blue-bg': '#E0F2FE', // New color for 'Life' collection tasks
+              'card-red-bg': '#FECACA',
+              'card-yellow-bg': '#FDE68A',
+              'card-teal-bg': '#99F6E4',
+              'card-pink-bg': '#FBCFE8',
+              'progress-orange': '#FF9D42',
+            },
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-bg-main">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
