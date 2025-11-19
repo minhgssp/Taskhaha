@@ -1,6 +1,6 @@
 // sw.js - Service Worker for in-browser transpilation of TSX/TS files
 
-const BABEL_URL = 'https://unpkg.com/@babel/standalone/babel.min.js';
+const BABEL_URL = 'https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js';
 
 // Create a promise that resolves when Babel is loaded and ready.
 const babelReadyPromise = new Promise((resolve, reject) => {
