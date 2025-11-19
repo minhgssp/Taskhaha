@@ -7,6 +7,10 @@ interface AppData {
 }
 
 const DEBOUNCE_DELAY = 1500; // 1.5 seconds
+const LOCAL_STORAGE_KEY = 'zenith_app_data'; // Key for local storage fallback
+
+// Check if running in AI Studio environment
+const isAiStudio = typeof window !== 'undefined' && !!(window as any).aistudio;
 
 export const useDataManager = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -14,33 +18,38 @@ export const useDataManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // FIX: Replaced NodeJS.Timeout with a browser-compatible type.
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Ref to hold the latest state to avoid stale state in timeout callbacks
   const latestDataRef = useRef<AppData>({ tasks, notes });
   useEffect(() => {
     latestDataRef.current = { tasks, notes };
   }, [tasks, notes]);
 
-
-  // Fetch initial data from the server
+  // Fetch initial data from API or localStorage
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const response = await fetch('/api/data'); // Assuming API route is at /api/data
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
+        if (isAiStudio) {
+          // AI Studio Environment: Use localStorage
+          const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
+          const data: AppData = localData ? JSON.parse(localData) : { tasks: [], notes: [] };
+          setTasks(data.tasks || []);
+          setNotes(data.notes || []);
+        } else {
+          // Deployed Environment (Vercel): Use API
+          const response = await fetch('/api/data');
+          if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.statusText}`);
+          }
+          const data: AppData = await response.json();
+          setTasks(data.tasks || []);
+          setNotes(data.notes || []);
         }
-        const data: AppData = await response.json();
-        setTasks(data.tasks || []);
-        setNotes(data.notes || []);
         setError(null);
       } catch (err: any) {
         console.error("Error fetching initial data:", err);
-        setError("Could not load data from server. Please try again later.");
-        // Fallback to empty state
+        setError("Could not load data. Please try again later.");
         setTasks([]);
         setNotes([]);
       } finally {
@@ -51,7 +60,7 @@ export const useDataManager = () => {
     fetchData();
   }, []);
 
-  // Debounced save function
+  // Debounced save function for API or localStorage
   const saveData = useCallback((data: AppData) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -59,13 +68,19 @@ export const useDataManager = () => {
     
     debounceTimeoutRef.current = setTimeout(async () => {
       try {
-        await fetch('/api/data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
+        if (isAiStudio) {
+          // AI Studio: Save to localStorage
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+        } else {
+          // Deployed: Save to API
+          await fetch('/api/data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+        }
         setError(null);
       } catch (err) {
         console.error("Error saving data:", err);
@@ -132,7 +147,6 @@ export const useDataManager = () => {
     if (oldStatus !== newStatus) {
         const oldColumnTasks = result.filter(t => t.status === oldStatus);
         oldColumnTasks.forEach((t, i) => t.order = i);
-        // FIX: Corrected typo from oldOldStatus to oldStatus
         result = [...result.filter(t => t.status !== oldStatus), ...oldColumnTasks];
     }
     updateState('tasks', result);
