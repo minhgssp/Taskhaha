@@ -1,6 +1,34 @@
-// sw.js - Service Worker for in-browser transpilation of TSX/TS files
+// sw.js - Service Worker for in-browser transpilation and PWA caching
 
 const BABEL_URL = 'https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js';
+const CACHE_NAME = 'taskhaha-cache-v1';
+
+// Danh sách các tài nguyên cần cache để ứng dụng hoạt động offline
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/index.tsx',
+  '/App.tsx',
+  '/types.ts',
+  '/components/KanbanBoard.tsx',
+  '/components/CalendarView.tsx',
+  '/components/WeeklyView.tsx',
+  '/components/TodoListView.tsx',
+  '/components/NotesView.tsx',
+  '/components/ChatAssistant.tsx',
+  '/components/TaskModal.tsx',
+  '/components/ConfirmationModal.tsx',
+  '/components/SettingsModal.tsx',
+  '/components/ApiKeyModal.tsx',
+  '/components/LoginModal.tsx',
+  '/components/Notification.tsx',
+  '/components/Icons.tsx',
+  '/components/MobileApp.tsx',
+  '/hooks/useDataManager.ts',
+  '/services/geminiService.ts',
+  '/services/promptService.ts',
+  '/manifest.webmanifest',
+];
 
 // Create a promise that resolves when Babel is loaded and ready.
 const babelReadyPromise = new Promise((resolve, reject) => {
@@ -18,16 +46,80 @@ const babelReadyPromise = new Promise((resolve, reject) => {
   }
 });
 
+// Event: install - Cache the app shell
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Opened cache and caching app shell');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => self.skipWaiting())
+      .catch(error => {
+        console.error('Failed to cache app shell:', error);
+      })
+  );
+});
+
+// Event: activate - Clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
 
 // Intercept fetch requests
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only intercept requests for .ts and .tsx files from our own origin
+  // Handle .ts/.tsx files with transpilation (existing logic)
   if (url.origin === self.location.origin && (url.pathname.endsWith('.tsx') || url.pathname.endsWith('.ts'))) {
     event.respondWith(transpileAndServe(request));
+    return; // Stop processing further for these files
   }
+
+  // Handle other requests with a cache-first strategy
+  event.respondWith(
+    caches.match(request)
+      .then((response) => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+
+        // Not in cache - go to network
+        return fetch(request).then(
+          (networkResponse) => {
+            // Check if we received a valid response to cache
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(request, responseToCache);
+              });
+
+            return networkResponse;
+          }
+        ).catch(error => {
+            console.error('Fetch failed; app might be offline.', error);
+            // Optional: You could return a specific offline fallback page here
+            // e.g., return caches.match('/offline.html');
+        });
+      })
+  );
 });
 
 async function transpileAndServe(request) {
@@ -68,13 +160,3 @@ async function transpileAndServe(request) {
     });
   }
 }
-
-// This forces the waiting service worker to become the active service worker.
-self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting());
-});
-
-// This claims control of the page as soon as the service worker activates.
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
-});
